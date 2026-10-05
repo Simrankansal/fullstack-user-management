@@ -1,9 +1,18 @@
 const express = require("express");
 const cors = require("cors");
+const dotenv = require("dotenv");
+
+const connectDB = require("./config/db");
+const userRoutes = require("./routes/userRoutes");
+
+dotenv.config();
 
 const app = express();
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
+
+// Connect MongoDB
+connectDB();
 
 // Middleware
 app.use(cors());
@@ -17,26 +26,8 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Users API
-app.get("/api/users", (req, res) => {
-  const users = [
-    {
-      id: 1,
-      name: "Simran",
-      email: "simran@example.com",
-    },
-    {
-      id: 2,
-      name: "Rahul",
-      email: "rahul@example.com",
-    },
-  ];
-
-  res.json({
-    success: true,
-    users,
-  });
-});
+// User routes
+app.use("/api/users", userRoutes);
 
 // Start server
 app.listen(PORT, () => {
