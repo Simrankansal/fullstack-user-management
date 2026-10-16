@@ -1,4 +1,75 @@
+const bcrypt = require("bcrypt");
 const User = require("../models/User");
+const { isValidEmail, isValidName } = require("../utils/validators");
+const createUser = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, email and password are required",
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
+    if (!isValidName(name)) {
+      return res.status(400).json({
+        success: false,
+        message: "Name must be at least 2 characters",
+      });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!isValidEmail(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid email (e.g. name@gmail.com)",
+      });
+    }
+
+    const existingUser = await User.findOne({ email: cleanEmail });
+
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: "Email already registered",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      name: name.trim(),
+      email: cleanEmail,
+      password: hashedPassword,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error("Create user error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to create user",
+    });
+  }
+};
 
 
 const getAllUsers = async (req, res) => {
@@ -60,7 +131,21 @@ const updateUser = async (req, res) => {
       });
     }
 
+    if (!isValidName(name)) {
+      return res.status(400).json({
+        success: false,
+        message: "Name must be at least 2 characters",
+      });
+    }
+
     const cleanEmail = email.trim().toLowerCase();
+
+    if (!isValidEmail(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid email (e.g. name@gmail.com)",
+      });
+    }
 
     const existingUser = await User.findOne({
       email: cleanEmail,
@@ -138,6 +223,7 @@ const deleteUser = async (req, res) => {
 
 
 module.exports = {
+  createUser,
   getAllUsers,
   getUserById,
   updateUser,

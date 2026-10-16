@@ -1,14 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-
-import {
-  getUserById,
-  updateUser,
-} from "../api/userApi";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { getUserById, updateUser } from "../api/userApi";
+import { validateEmail, validateName } from "../utils/validation";
 
 function EditUser() {
   const { id } = useParams();
-
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -16,11 +12,10 @@ function EditUser() {
     email: "",
   });
 
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -31,10 +26,9 @@ function EditUser() {
           name: data.user.name,
           email: data.user.email,
         });
-      } catch (error) {
+      } catch (fetchError) {
         setError(
-          error.response?.data?.message ||
-            "Failed to fetch user"
+          fetchError.response?.data?.message || "Failed to fetch user"
         );
       } finally {
         setLoading(false);
@@ -44,7 +38,6 @@ function EditUser() {
     fetchUser();
   }, [id]);
 
-
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -52,83 +45,112 @@ function EditUser() {
       ...previousData,
       [name]: value,
     }));
+
+    setFieldErrors((previous) => ({
+      ...previous,
+      [name]: "",
+    }));
   };
 
+  const validateForm = () => {
+    const errors = {
+      name: validateName(formData.name),
+      email: validateEmail(formData.email),
+    };
+
+    setFieldErrors(errors);
+
+    return !errors.name && !errors.email;
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    if (!validateForm()) {
+      return;
+    }
+
     try {
       setSaving(true);
       setError("");
-      setMessage("");
 
-      const data = await updateUser(
-        id,
-        formData
-      );
+      await updateUser(id, {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+      });
 
-      setMessage(data.message);
-    } catch (error) {
+      navigate("/users", { replace: true });
+    } catch (submitError) {
       setError(
-        error.response?.data?.message ||
-          "Failed to update user"
+        submitError.response?.data?.message || "Failed to update user"
       );
     } finally {
       setSaving(false);
     }
   };
 
-
   if (loading) {
-    return <h2>Loading...</h2>;
+    return (
+      <div className="text-center py-5">
+        <div className="spinner-border text-primary" role="status" />
+      </div>
+    );
   }
-
 
   return (
     <div>
-      <h1>Edit User</h1>
+      <h1 className="h3 mb-4">Edit user</h1>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Name</label>
+      <div className="card shadow-sm" style={{ maxWidth: 480 }}>
+        <div className="card-body">
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="mb-3">
+              <label className="form-label" htmlFor="name">Name</label>
+              <input
+                id="name"
+                type="text"
+                name="name"
+                className="form-control"
+                value={formData.name}
+                onChange={handleChange}
+              />
+              {fieldErrors.name && (
+                <div className="form-text text-danger">{fieldErrors.name}</div>
+              )}
+            </div>
 
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-          />
+            <div className="mb-3">
+              <label className="form-label" htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                name="email"
+                className="form-control"
+                value={formData.email}
+                onChange={handleChange}
+              />
+              {fieldErrors.email && (
+                <div className="form-text text-danger">{fieldErrors.email}</div>
+              )}
+            </div>
+
+            {error && <div className="alert alert-danger">{error}</div>}
+
+            <div className="d-flex gap-2">
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={saving}
+              >
+                {saving ? "Updating..." : "Update user"}
+              </button>
+              <Link className="btn btn-outline-secondary" to="/users">
+                Cancel
+              </Link>
+            </div>
+          </form>
         </div>
-
-        <div>
-          <label>Email</label>
-
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={saving}
-        >
-          {saving ? "Updating..." : "Update User"}
-        </button>
-      </form>
-
-      {message && <p>{message}</p>}
-
-      {error && <p>{error}</p>}
-
-      <button
-        onClick={() => navigate("/users")}
-      >
-        Back to Users
-      </button>
+      </div>
     </div>
   );
 }

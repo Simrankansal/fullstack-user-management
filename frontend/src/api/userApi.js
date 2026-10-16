@@ -23,7 +23,6 @@ export const getProfile = async () => {
   return response.data;
 };
 
-
 export const getUsers = async () => {
   const response = await axios.get(
     `${API_URL}/users`,

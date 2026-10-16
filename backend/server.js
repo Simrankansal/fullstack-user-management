@@ -5,6 +5,8 @@ const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 const authRoutes = require("./routes/authRoutes");
+const projectRoutes = require("./routes/projectRoutes");
+const taskRoutes = require("./routes/taskRoutes");
 
 dotenv.config();
 
@@ -32,6 +34,10 @@ app.use("/api/users", userRoutes);
 
 // Authentication routes
 app.use("/api/auth", authRoutes);
+
+// Project & task routes
+app.use("/api/projects", projectRoutes);
+app.use("/api/tasks", taskRoutes);
 
 // Start server
 app.listen(PORT, () => {

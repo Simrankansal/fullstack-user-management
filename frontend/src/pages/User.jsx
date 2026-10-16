@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
-
-import {
-  getUsers,
-  deleteUser,
-} from "../api/userApi";
+import { Link } from "react-router-dom";
+import { getUsers, deleteUser } from "../api/userApi";
 
 function Users() {
   const [users, setUsers] = useState([]);
@@ -13,25 +10,22 @@ function Users() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      setError("");
 
       const data = await getUsers();
-
-      setUsers(data.users);
-    } catch (error) {
+      setUsers(data.users || []);
+    } catch (fetchError) {
       setError(
-        error.response?.data?.message ||
-          "Failed to fetch users"
+        fetchError.response?.data?.message || "Failed to fetch users"
       );
     } finally {
       setLoading(false);
     }
   };
 
-
   useEffect(() => {
     fetchUsers();
   }, []);
-
 
   const handleDelete = async (id) => {
     const confirmed = window.confirm(
@@ -44,63 +38,75 @@ function Users() {
 
     try {
       await deleteUser(id);
-
       setUsers((previousUsers) =>
-        previousUsers.filter(
-          (user) => user._id !== id
-        )
+        previousUsers.filter((user) => user._id !== id)
       );
-    } catch (error) {
+    } catch (deleteError) {
       alert(
-        error.response?.data?.message ||
-          "Failed to delete user"
+        deleteError.response?.data?.message || "Failed to delete user"
       );
     }
   };
 
-
-  if (loading) {
-    return <h2>Loading users...</h2>;
-  }
-
-
-  if (error) {
-    return <h2>{error}</h2>;
-  }
-
-
   return (
     <div>
-      <h1>Users</h1>
+      <h1 className="h3 mb-4">User list</h1>
 
-      {users.length === 0 ? (
-        <p>No users found.</p>
-      ) : (
-        users.map((user) => (
-          <div key={user._id}>
-            <h3>{user.name}</h3>
+      <div className="card shadow-sm">
+        <div className="card-body">
+          {loading && (
+            <div className="text-center py-4">
+              <div className="spinner-border spinner-border-sm text-primary" />
+            </div>
+          )}
 
-            <p>{user.email}</p>
+          {error && <div className="alert alert-danger">{error}</div>}
 
-         <button
-  onClick={() =>
-    window.location.href = `/users/edit/${user._id}`
-  }
->
-  Edit
-</button>
-
-<button
-  onClick={() =>
-    handleDelete(user._id)
-  }
->
-  Delete
-</button>
-            <hr />
-          </div>
-        ))
-      )}
+          {!loading && !error && (
+            <div className="table-responsive">
+              <table className="table table-hover align-middle mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="text-muted">
+                        No users found.
+                      </td>
+                    </tr>
+                  )}
+                  {users.map((user) => (
+                    <tr key={user._id}>
+                      <td className="fw-medium">{user.name}</td>
+                      <td>{user.email}</td>
+                      <td>
+                        <Link
+                          className="btn btn-sm btn-outline-primary me-1"
+                          to={`/users/edit/${user._id}`}
+                        >
+                          Edit
+                        </Link>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => handleDelete(user._id)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

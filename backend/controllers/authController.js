@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-
+const { isValidEmail, isValidName } = require("../utils/validators");
 const signup = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -20,7 +20,21 @@ const signup = async (req, res) => {
       });
     }
 
+    if (!isValidName(name)) {
+      return res.status(400).json({
+        success: false,
+        message: "Name must be at least 2 characters",
+      });
+    }
+
     const cleanEmail = email.trim().toLowerCase();
+
+    if (!isValidEmail(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid email (e.g. name@gmail.com)",
+      });
+    }
 
     const existingUser = await User.findOne({
       email: cleanEmail,
@@ -74,6 +88,13 @@ const login = async (req, res) => {
     }
 
     const cleanEmail = email.trim().toLowerCase();
+
+    if (!isValidEmail(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid email (e.g. name@gmail.com)",
+      });
+    }
 
     // Find user
     const user = await User.findOne({

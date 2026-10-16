@@ -1,6 +1,7 @@
 const express = require("express");
 
 const {
+  createUser,
   getAllUsers,
   getUserById,
   updateUser,
@@ -50,6 +51,13 @@ router.get(
   "/",
   authMiddleware,
   getAllUsers
+);
+
+// CREATE user (logged-in users — e.g. from user list)
+router.post(
+  "/",
+  authMiddleware,
+  createUser
 );
 
 
