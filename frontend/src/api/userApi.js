@@ -1,72 +1,32 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:5000/api";
-
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
-
-  return {
-    Authorization: `Bearer ${token}`,
-  };
-};
-
+/** User profile and admin user management API client. */
+import { httpClient } from "./httpClient";
 
 export const getProfile = async () => {
-  const response = await axios.get(
-    `${API_URL}/users/profile`,
-    {
-      headers: getAuthHeaders(),
-    }
-  );
-
+  const response = await httpClient.get("/users/profile");
   return response.data;
 };
 
 export const getUsers = async () => {
-  const response = await axios.get(
-    `${API_URL}/users`,
-    {
-      headers: getAuthHeaders(),
-    }
-  );
-
+  const response = await httpClient.get("/users");
   return response.data;
 };
-
 
 export const getUserById = async (id) => {
-  const response = await axios.get(
-    `${API_URL}/users/${id}`,
-    {
-      headers: getAuthHeaders(),
-    }
-  );
-
+  const response = await httpClient.get(`/users/${id}`);
   return response.data;
 };
-
 
 export const updateUser = async (id, userData) => {
-  const response = await axios.put(
-    `${API_URL}/users/${id}`,
-    userData,
-    {
-      headers: getAuthHeaders(),
-    }
-  );
-
+  const response = await httpClient.put(`/users/${id}`, userData);
   return response.data;
 };
 
-
 export const deleteUser = async (id) => {
-  const response = await axios.delete(
-    `${API_URL}/users/${id}`,
-    {
-      headers: getAuthHeaders(),
-    }
-  );
+  const response = await httpClient.delete(`/users/${id}`);
+  return response.data;
+};
 
+export const getActiveUsers = async () => {
+  const response = await httpClient.get("/users/active");
   return response.data;
 };

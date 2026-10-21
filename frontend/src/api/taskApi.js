@@ -1,49 +1,76 @@
-import axios from "axios";
+/** Task CRUD, comments, attachments, and watchers API client. */
+import { httpClient, UPLOADS_BASE_URL } from "./httpClient";
 
-const API_URL = "http://localhost:5000/api";
+export const getAttachmentUrl = (fileName) => `${UPLOADS_BASE_URL}/${fileName}`;
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
-  return { Authorization: `Bearer ${token}` };
-};
-//create a new task
 export const createTask = async (taskData) => {
-  const response = await axios.post(`${API_URL}/tasks`, taskData, {
-    headers: getAuthHeaders(),
-  });
+  const response = await httpClient.post("/tasks", taskData);
   return response.data;
 };
-//update the status of a task
+
 export const updateTaskStatus = async (taskId, status) => {
-  const response = await axios.patch(
-    `${API_URL}/tasks/${taskId}/status`,
-    { status },
-    { headers: getAuthHeaders() }
-  );
+  const response = await httpClient.patch(`/tasks/${taskId}/status`, { status });
   return response.data;
 };
-//assigna task to a user
+
 export const assignTask = async (taskId, assigneeId) => {
-  const response = await axios.patch(
-    `${API_URL}/tasks/${taskId}/assign`,
-    { assigneeId: assigneeId || null },
-    { headers: getAuthHeaders() }
-  );
-  return response.data;
-};
-//add a comment to a task
-export const addTaskComment = async (taskId, body) => {
-  const response = await axios.post(
-    `${API_URL}/tasks/${taskId}/comments`,
-    { body },
-    { headers: getAuthHeaders() }
-  );
-  return response.data;
-};
-//get the activity of a task
-export const getTaskActivity = async (taskId) => {
-  const response = await axios.get(`${API_URL}/tasks/${taskId}/activity`, {
-    headers: getAuthHeaders(),
+  const response = await httpClient.patch(`/tasks/${taskId}/assign`, {
+    assigneeId: assigneeId || null,
   });
+  return response.data;
+};
+
+export const addTaskComment = async (taskId, body) => {
+  const response = await httpClient.post(`/tasks/${taskId}/comments`, { body });
+  return response.data;
+};
+
+export const getTaskActivity = async (taskId) => {
+  const response = await httpClient.get(`/tasks/${taskId}/activity`);
+  return response.data;
+};
+
+export const updateTask = async (taskId, taskData) => {
+  const response = await httpClient.patch(`/tasks/${taskId}`, taskData);
+  return response.data;
+};
+
+export const listTaskAttachments = async (taskId) => {
+  const response = await httpClient.get(`/tasks/${taskId}/attachments`);
+  return response.data;
+};
+
+export const uploadTaskAttachment = async (taskId, file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await httpClient.post(
+    `/tasks/${taskId}/attachments`,
+    formData
+  );
+  return response.data;
+};
+
+export const deleteTaskAttachment = async (attachmentId) => {
+  const response = await httpClient.delete(`/attachments/${attachmentId}`);
+  return response.data;
+};
+
+export const listTaskWatchers = async (taskId) => {
+  const response = await httpClient.get(`/tasks/${taskId}/watchers`);
+  return response.data;
+};
+
+export const addTaskWatcher = async (taskId, userId) => {
+  const response = await httpClient.post(
+    `/tasks/${taskId}/watchers`,
+    userId ? { userId } : {}
+  );
+  return response.data;
+};
+
+export const removeTaskWatcher = async (taskId, userId) => {
+  const response = await httpClient.delete(
+    `/tasks/${taskId}/watchers/${userId}`
+  );
   return response.data;
 };

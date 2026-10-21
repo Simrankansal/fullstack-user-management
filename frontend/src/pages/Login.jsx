@@ -124,7 +124,7 @@ function Login() {
 
             <button
               type="submit"
-              className="btn btn-primary w-100"
+              className="btn btn-brand w-100"
               disabled={loading}
             >
               {loading ? "Logging in..." : "Login"}

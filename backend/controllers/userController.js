@@ -1,6 +1,20 @@
+/** Admin user management and active user list for project membership. */
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
 const { isValidEmail, isValidName } = require("../utils/validators");
+const { isAdmin, APP_ROLES } = require("../constants/taskConstants");
+
+const listActiveUsers = async (req, res) => {
+  try {
+    const users = await User.find({ isActive: { $ne: false } })
+      .select("name email role")
+      .sort({ name: 1 });
+    res.status(200).json({ success: true, users });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch users" });
+  }
+};
+
 const createUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -74,6 +88,13 @@ const createUser = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
+    if (!isAdmin(req.appRole)) {
+      return res.status(403).json({
+        success: false,
+        message: "Admin access required",
+      });
+    }
+
     const users = await User.find()
       .select("-password")
       .sort({ createdAt: -1 });
@@ -122,7 +143,10 @@ const getUserById = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, role, isActive } = req.body;
+    const targetId = req.params.id;
+    const admin = isAdmin(req.appRole);
+    const editingSelf = String(targetId) === String(req.userId);
 
     if (!name || !email) {
       return res.status(400).json({
@@ -159,17 +183,39 @@ const updateUser = async (req, res) => {
       });
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      {
-        name: name.trim(),
-        email: cleanEmail,
-      },
-      {
-        new: true,
-        runValidators: true,
+    const updates = { name: name.trim(), email: cleanEmail };
+
+    if (admin) {
+      if (role !== undefined) {
+        if (!APP_ROLES.includes(role)) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid role",
+          });
+        }
+        if (editingSelf && role !== "admin") {
+          return res.status(400).json({
+            success: false,
+            message: "Cannot remove your own admin role",
+          });
+        }
+        updates.role = role;
       }
-    ).select("-password");
+      if (isActive !== undefined) {
+        if (editingSelf && isActive === false) {
+          return res.status(400).json({
+            success: false,
+            message: "Cannot deactivate yourself",
+          });
+        }
+        updates.isActive = Boolean(isActive);
+      }
+    }
+
+    const user = await User.findByIdAndUpdate(targetId, updates, {
+      new: true,
+      runValidators: true,
+    }).select("-password");
 
     if (!user) {
       return res.status(404).json({
@@ -196,6 +242,20 @@ const updateUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
+    if (!isAdmin(req.appRole)) {
+      return res.status(403).json({
+        success: false,
+        message: "Admin access required",
+      });
+    }
+
+    if (String(req.params.id) === String(req.userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot delete your own account",
+      });
+    }
+
     const user = await User.findByIdAndDelete(
       req.params.id
     );
@@ -223,6 +283,7 @@ const deleteUser = async (req, res) => {
 
 
 module.exports = {
+  listActiveUsers,
   createUser,
   getAllUsers,
   getUserById,

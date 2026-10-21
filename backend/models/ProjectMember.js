@@ -1,3 +1,4 @@
+/** Links users to projects with role owner | member. */
 const mongoose = require("mongoose");
 
 const projectMemberSchema = new mongoose.Schema(

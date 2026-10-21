@@ -1,5 +1,9 @@
+/** Task on a project board with priority, labels, assignee, due date. */
 const mongoose = require("mongoose");
-const { TASK_STATUSES } = require("../constants/taskConstants");
+const {
+  TASK_STATUSES,
+  TASK_PRIORITIES,
+} = require("../constants/taskConstants");
 
 const taskSchema = new mongoose.Schema(
   {
@@ -8,16 +12,8 @@ const taskSchema = new mongoose.Schema(
       ref: "Project",
       required: true,
     },
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    description: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+    title: { type: String, required: true, trim: true },
+    description: { type: String, trim: true, default: "" },
     status: {
       type: String,
       enum: TASK_STATUSES,
@@ -25,12 +21,16 @@ const taskSchema = new mongoose.Schema(
     },
     priority: {
       type: String,
-      enum: ["low", "medium", "high"],
+      enum: TASK_PRIORITIES,
       default: "medium",
     },
-    dueDate: {
-      type: Date,
-    },
+    labels: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "TaskLabel",
+      },
+    ],
+    dueDate: { type: Date },
     assignee: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -42,9 +42,7 @@ const taskSchema = new mongoose.Schema(
       required: true,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 module.exports = mongoose.model("Task", taskSchema);

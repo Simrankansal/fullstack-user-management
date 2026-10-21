@@ -1,16 +1,46 @@
-# React + Vite
+# FlowDesk frontend (Create React App)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Standard **React** app using **react-scripts** (Create React App). No Vite.
 
-Currently, two official plugins are available:
+## Local development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+cd frontend
+npm install
+npm start
+```
 
-## React Compiler
+Runs at [http://localhost:3000](http://localhost:3000). Start the **backend** on port 5000.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Optional `.env` (see `.env.example`):
 
-## Expanding the ESLint configuration
+- `REACT_APP_API_URL` — API base (default `http://localhost:5000/api`)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Production build
+
+```bash
+npm run build
+```
+
+Output folder: **`build/`** (upload this folder to static hosting).
+
+Set environment variables on your host:
+
+| Variable | Example |
+|----------|---------|
+| `REACT_APP_API_URL` | `https://your-api.com/api` |
+| `REACT_APP_UPLOADS_URL` | `https://your-api.com/uploads` |
+
+## Deploy notes
+
+- **SPA routing:** `public/_redirects` is included for Netlify (`/* → index.html`).
+- **Vercel / IIS:** configure all routes to serve `index.html`.
+- **Same server as API:** you can serve `build/` from Express and keep API on `/api`.
+
+## Scripts
+
+| Command | Purpose |
+|---------|---------|
+| `npm start` | Dev server |
+| `npm run build` | Optimized production build |
+| `npm test` | Run tests once |

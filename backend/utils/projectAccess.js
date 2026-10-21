@@ -1,3 +1,4 @@
+/** Project/task membership lookups for authorization checks. */
 const ProjectMember = require("../models/ProjectMember");
 const Task = require("../models/Task");
 
@@ -9,7 +10,8 @@ const getProjectMembership = async (projectId, userId) => {
 };
 
 const getTaskProjectMembership = async (taskId, userId) => {
-  const task = await Task.findById(taskId).select("project");
+  // Load full task so notifications and updates can use title, assignee, etc.
+  const task = await Task.findById(taskId);
 
   if (!task) {
     return { task: null, membership: null };

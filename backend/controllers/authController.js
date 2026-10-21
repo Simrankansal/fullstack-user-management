@@ -1,7 +1,9 @@
+/** Signup and login; returns JWT and user role for portal permissions. */
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { isValidEmail, isValidName } = require("../utils/validators");
+
 const signup = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -48,11 +50,13 @@ const signup = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const adminExists = await User.exists({ role: "admin" });
 
     const user = await User.create({
       name: name.trim(),
       email: cleanEmail,
       password: hashedPassword,
+      role: adminExists ? "member" : "admin",
     });
 
     res.status(201).json({
@@ -62,6 +66,7 @@ const signup = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -121,6 +126,13 @@ const login = async (req, res) => {
       });
     }
 
+    if (user.isActive === false) {
+      return res.status(403).json({
+        success: false,
+        message: "Account deactivated",
+      });
+    }
+
     // Create JWT
     const token = jwt.sign(
       {
@@ -140,6 +152,7 @@ const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
       },
     });
   } catch (error) {

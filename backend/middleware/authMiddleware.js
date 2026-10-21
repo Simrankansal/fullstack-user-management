@@ -1,3 +1,4 @@
+/** Verifies Bearer JWT and sets req.userId. */
 const jwt = require("jsonwebtoken");
 
 const authMiddleware = (req, res, next) => {

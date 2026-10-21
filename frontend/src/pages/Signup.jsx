@@ -141,7 +141,7 @@ function Signup() {
 
             <button
               type="submit"
-              className="btn btn-primary w-100"
+              className="btn btn-brand w-100"
               disabled={loading}
             >
               {loading ? "Creating account..." : "Sign up"}

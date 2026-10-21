@@ -1,15 +1,22 @@
+/** Edit user profile; admins can set role and active status. */
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import PageHeader from "../components/PageHeader";
 import { getUserById, updateUser } from "../api/userApi";
 import { validateEmail, validateName } from "../utils/validation";
+import { getStoredUser, isAppAdmin } from "../utils/permissions";
 
 function EditUser() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const currentUser = getStoredUser();
+  const admin = isAppAdmin(currentUser);
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    role: "member",
+    isActive: true,
   });
 
   const [fieldErrors, setFieldErrors] = useState({});
@@ -25,6 +32,8 @@ function EditUser() {
         setFormData({
           name: data.user.name,
           email: data.user.email,
+          role: data.user.role || "member",
+          isActive: data.user.isActive !== false,
         });
       } catch (fetchError) {
         setError(
@@ -39,11 +48,11 @@ function EditUser() {
   }, [id]);
 
   const handleChange = (event) => {
-    const { name, value } = event.target;
+    const { name, value, type, checked } = event.target;
 
     setFormData((previousData) => ({
       ...previousData,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
 
     setFieldErrors((previous) => ({
@@ -74,10 +83,17 @@ function EditUser() {
       setSaving(true);
       setError("");
 
-      await updateUser(id, {
+      const payload = {
         name: formData.name.trim(),
         email: formData.email.trim(),
-      });
+      };
+
+      if (admin) {
+        payload.role = formData.role;
+        payload.isActive = formData.isActive;
+      }
+
+      await updateUser(id, payload);
 
       navigate("/users", { replace: true });
     } catch (submitError) {
@@ -99,7 +115,11 @@ function EditUser() {
 
   return (
     <div>
-      <h1 className="h3 mb-4">Edit user</h1>
+      <PageHeader title="Edit user">
+        <Link className="btn btn-outline-secondary btn-sm" to="/users">
+          Cancel
+        </Link>
+      </PageHeader>
 
       <div className="card shadow-sm" style={{ maxWidth: 480 }}>
         <div className="card-body">
@@ -134,20 +154,46 @@ function EditUser() {
               )}
             </div>
 
+            {admin && (
+              <>
+                <div className="mb-3">
+                  <label className="form-label" htmlFor="role">Role</label>
+                  <select
+                    id="role"
+                    name="role"
+                    className="form-select"
+                    value={formData.role}
+                    onChange={handleChange}
+                  >
+                    <option value="member">Member</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div className="mb-3 form-check">
+                  <input
+                    id="isActive"
+                    name="isActive"
+                    type="checkbox"
+                    className="form-check-input"
+                    checked={formData.isActive}
+                    onChange={handleChange}
+                  />
+                  <label className="form-check-label" htmlFor="isActive">
+                    Active account
+                  </label>
+                </div>
+              </>
+            )}
+
             {error && <div className="alert alert-danger">{error}</div>}
 
-            <div className="d-flex gap-2">
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={saving}
-              >
-                {saving ? "Updating..." : "Update user"}
-              </button>
-              <Link className="btn btn-outline-secondary" to="/users">
-                Cancel
-              </Link>
-            </div>
+            <button
+              type="submit"
+              className="btn btn-brand"
+              disabled={saving}
+            >
+              {saving ? "Updating..." : "Update user"}
+            </button>
           </form>
         </div>
       </div>
